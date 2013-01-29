@@ -14,9 +14,12 @@
 
 #import "CZDateFormatterCache.h"
 
+
 @implementation CZDateFormatterCache
 {
+  NSLocale *_currentLocale;
   NSDateFormatter *_dateFormatters[5][5];
+  NSDateFormatter *_simpleTimeFormatter;
 }
 
 #pragma mark - Class methods
@@ -63,21 +66,43 @@
   NSAssert(kCFDateFormatterNoStyle == 0, @"CFDateFormatterStyle has changed");
   NSAssert(kCFDateFormatterFullStyle == 4, @"CFDateFormatterStyle has changed");
 
+  // date formatters for all styles
+
   for (int dateStyle = kCFDateFormatterNoStyle; dateStyle <= kCFDateFormatterFullStyle; dateStyle++) {
     for (int timeStyle = kCFDateFormatterNoStyle; timeStyle <= kCFDateFormatterFullStyle; timeStyle++) {
       NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
-      [formatter setLocale:[NSLocale currentLocale]];
+      [formatter setLocale:self.currentLocale];
       [formatter setCalendar:[NSCalendar currentCalendar]];
       [formatter setDateStyle:dateStyle];
       [formatter setTimeStyle:timeStyle];
       _dateFormatters[dateStyle][timeStyle] = formatter;
     }
   }
+
+  // date formatter for simple time formatter
+  
+  NSString *simpleTimeFormatTemplate = [NSDateFormatter dateFormatFromTemplate:@"j" options:0 locale:self.currentLocale];
+  BOOL use12HourClock = ([simpleTimeFormatTemplate rangeOfString:@"a"].location != NSNotFound);
+  if (use12HourClock) {
+    _simpleTimeFormatter = [[NSDateFormatter alloc] init];
+    _simpleTimeFormatter.dateFormat = simpleTimeFormatTemplate;
+  }
+  else {
+    _simpleTimeFormatter = nil;
+  }
+}
+
+- (NSLocale *)currentLocale
+{
+  if (_currentLocale == nil) {
+    _currentLocale = [NSLocale currentLocale];
+  }
+  return _currentLocale;
 }
 
 - (void)localeDidChangeNotification:(NSNotification *)notification
 {
-  [self allocDateFormatters];
+  self.currentLocale = [NSLocale currentLocale];
 }
 
 - (NSString *)localizedStringFromDate:(NSDate *)date dateStyle:(NSDateFormatterStyle)dateStyle timeStyle:(NSDateFormatterStyle)timeStyle
@@ -89,12 +114,42 @@
   return [dateFormatter stringFromDate:date];
 }
 
+- (NSString *)localizedSimpleTimeStringForDate:(NSDate *)date
+{
+  if (_simpleTimeFormatter == nil) {
+    return [self localizedStringFromDate:date dateStyle:NSDateFormatterNoStyle timeStyle:NSDateFormatterShortStyle];
+  }
+
+  NSCalendar *calendar = [NSCalendar currentCalendar];
+  NSDateComponents *components = [calendar components:(NSHourCalendarUnit | NSMinuteCalendarUnit) fromDate:date];
+  if (components.minute == 0) {
+    if (components.hour == 12) {
+      return NSLocalizedString(@"Noon", nil);
+    }
+    else {
+      return [_simpleTimeFormatter stringFromDate:date];
+    }
+  }
+  else {
+    return [self localizedStringFromDate:date dateStyle:NSDateFormatterNoStyle timeStyle:NSDateFormatterShortStyle];
+  }
+}
+
 - (void)releaseDateFormatters
 {
   for (int dateStyle = kCFDateFormatterNoStyle; dateStyle <= kCFDateFormatterFullStyle; dateStyle++) {
     for (int timeStyle = kCFDateFormatterNoStyle; timeStyle <= kCFDateFormatterFullStyle; timeStyle++) {
       _dateFormatters[dateStyle][timeStyle] = nil;
     }
+  }
+}
+
+- (void)setCurrentLocale:(NSLocale *)currentLocale
+{
+  if (_currentLocale != currentLocale) {
+    [self releaseDateFormatters];
+    _currentLocale = currentLocale;
+    [self allocDateFormatters];
   }
 }
 
