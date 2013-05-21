@@ -26,10 +26,15 @@
 
 + (CZDateFormatterCache *)mainQueueCache
 {
+  return [self mainThreadCache];
+}
+
++ (CZDateFormatterCache *)mainThreadCache
+{
   static dispatch_once_t onceToken;
   static CZDateFormatterCache *instance = nil;
 
-  NSAssert(dispatch_get_current_queue() == dispatch_get_main_queue(), @"Must access on the main dispatch queue");
+  NSAssert([NSThread isMainThread], @"Must access on the main thread");
 
   dispatch_once(&onceToken, ^{
     instance = [[CZDateFormatterCache alloc] init];
@@ -80,7 +85,7 @@
   }
 
   // date formatter for simple time formatter
-  
+
   NSString *simpleTimeFormatTemplate = [NSDateFormatter dateFormatFromTemplate:@"j" options:0 locale:self.currentLocale];
   BOOL use12HourClock = ([simpleTimeFormatTemplate rangeOfString:@"a"].location != NSNotFound);
   if (use12HourClock) {
