@@ -8,11 +8,11 @@ can be shared by all of your UI code, as in:
 
     NSDate *date = ...;
 
-    cell.detailTextLabel.text = [[CZDateFormatterCache mainQueueCache] localizedStringFromDate:date dateStyle:kCFDateFormatterShortStyle timeStyle:kCFDateFormatterShortStyle];
+    cell.detailTextLabel.text = [[CZDateFormatterCache mainThreadCache] localizedStringFromDate:date dateStyle:kCFDateFormatterShortStyle timeStyle:kCFDateFormatterShortStyle];
 
-Since `NSDateFormatter` instances are *not* thread safe, you should only use the cache from your
-main dispatch queue. In fact, `CZDateFormatterCache` asserts if you try to use the cache from a
-different dispatch queue.
+Since `NSDateFormatter` instances are *not* thread safe, you should only use the cache from the
+"main" thread. In fact, `CZDateFormatterCache` asserts if you try to use the cache from another
+thread.
 
 Credits
 -------
