@@ -59,7 +59,7 @@
 
 - (void)testCacheExists
 {
-  STAssertNotNil([CZDateFormatterCache mainQueueCache], @"Couldn't access cache");
+  STAssertNotNil([CZDateFormatterCache mainThreadCache], @"Couldn't access cache");
 }
 
 - (void)testCacheForAllDateAndTimeStyles
@@ -68,7 +68,7 @@
 
   for (int dateStyle = kCFDateFormatterNoStyle; dateStyle <= kCFDateFormatterFullStyle; dateStyle++) {
     for (int timeStyle = kCFDateFormatterNoStyle; timeStyle <= kCFDateFormatterFullStyle; timeStyle++) {
-      NSString *s = [[CZDateFormatterCache mainQueueCache] localizedStringFromDate:date dateStyle:dateStyle timeStyle:timeStyle];
+      NSString *s = [[CZDateFormatterCache mainThreadCache] localizedStringFromDate:date dateStyle:dateStyle timeStyle:timeStyle];
       NSLog(@"%d %d has %@ %d", dateStyle, timeStyle, s, s.length);
       if (dateStyle == kCFDateFormatterNoStyle && timeStyle == kCFDateFormatterNoStyle)
         STAssertTrue(s.length == 0, @"String should be blank");
@@ -82,92 +82,97 @@
 {
   dispatch_queue_t alt_dispatch_queue = dispatch_queue_create("test dispatch queue", DISPATCH_QUEUE_SERIAL);
 
-  dispatch_sync(alt_dispatch_queue, ^{
+  dispatch_semaphore_t sem = dispatch_semaphore_create(0);
+
+  dispatch_async(alt_dispatch_queue, ^{
     STAssertThrows([CZDateFormatterCache mainQueueCache], @"Should only allow access from the main dispatch queue");
+    dispatch_semaphore_signal(sem);
   });
+
+  dispatch_semaphore_wait(sem, DISPATCH_TIME_FOREVER);
 }
 
 - (void)testSimpleTimeFormatterInEnglish
 {
-  [CZDateFormatterCache mainQueueCache].currentLocale = [self unitedStatesLocale];
+  [CZDateFormatterCache mainThreadCache].currentLocale = [self unitedStatesLocale];
 
   NSString *s;
   NSDate *date;
 
   date = [self january1st2013WithHour:01 minute:23];
-  s = [[CZDateFormatterCache mainQueueCache] localizedSimpleTimeStringForDate:date];
+  s = [[CZDateFormatterCache mainThreadCache] localizedSimpleTimeStringForDate:date];
   STAssertEqualObjects(s, @"1:23 AM", nil);
 
   date = [self january1st2013WithHour:01 minute:00];
-  s = [[CZDateFormatterCache mainQueueCache] localizedSimpleTimeStringForDate:date];
+  s = [[CZDateFormatterCache mainThreadCache] localizedSimpleTimeStringForDate:date];
   STAssertEqualObjects(s, @"1 AM", nil);
 
   date = [self january1st2013WithHour:12 minute:23];
-  s = [[CZDateFormatterCache mainQueueCache] localizedSimpleTimeStringForDate:date];
+  s = [[CZDateFormatterCache mainThreadCache] localizedSimpleTimeStringForDate:date];
   STAssertEqualObjects(s, @"12:23 PM", nil);
 
   date = [self january1st2013WithHour:12 minute:00];
-  s = [[CZDateFormatterCache mainQueueCache] localizedSimpleTimeStringForDate:date];
+  s = [[CZDateFormatterCache mainThreadCache] localizedSimpleTimeStringForDate:date];
   STAssertEqualObjects(s, @"Noon", nil);
 
   date = [self january1st2013WithHour:14 minute:23];
-  s = [[CZDateFormatterCache mainQueueCache] localizedSimpleTimeStringForDate:date];
+  s = [[CZDateFormatterCache mainThreadCache] localizedSimpleTimeStringForDate:date];
   STAssertEqualObjects(s, @"2:23 PM", nil);
 }
 
 - (void)testSimpleTimeFormatterInRussian
 {
-  [CZDateFormatterCache mainQueueCache].currentLocale = [self russianLocale];
+  [CZDateFormatterCache mainThreadCache].currentLocale = [self russianLocale];
 
   NSString *s;
   NSDate *date;
 
   date = [self january1st2013WithHour:01 minute:23];
-  s = [[CZDateFormatterCache mainQueueCache] localizedSimpleTimeStringForDate:date];
+  s = [[CZDateFormatterCache mainThreadCache] localizedSimpleTimeStringForDate:date];
   STAssertEqualObjects(s, @"1:23", nil);
 
   date = [self january1st2013WithHour:01 minute:00];
-  s = [[CZDateFormatterCache mainQueueCache] localizedSimpleTimeStringForDate:date];
+  s = [[CZDateFormatterCache mainThreadCache] localizedSimpleTimeStringForDate:date];
   STAssertEqualObjects(s, @"1:00", nil);
 
   date = [self january1st2013WithHour:12 minute:23];
-  s = [[CZDateFormatterCache mainQueueCache] localizedSimpleTimeStringForDate:date];
+  s = [[CZDateFormatterCache mainThreadCache] localizedSimpleTimeStringForDate:date];
   STAssertEqualObjects(s, @"12:23", nil);
 
   date = [self january1st2013WithHour:12 minute:00];
-  s = [[CZDateFormatterCache mainQueueCache] localizedSimpleTimeStringForDate:date];
+  s = [[CZDateFormatterCache mainThreadCache] localizedSimpleTimeStringForDate:date];
   STAssertEqualObjects(s, @"12:00", nil);
 
   date = [self january1st2013WithHour:14 minute:23];
-  s = [[CZDateFormatterCache mainQueueCache] localizedSimpleTimeStringForDate:date];
+  s = [[CZDateFormatterCache mainThreadCache] localizedSimpleTimeStringForDate:date];
   STAssertEqualObjects(s, @"14:23", nil);
 }
 
 - (void)testSimpleTimeFormatterInUnitedKingdom
 {
-  [CZDateFormatterCache mainQueueCache].currentLocale = [self unitedKingdomLocale];
+  [CZDateFormatterCache mainThreadCache].currentLocale = [self unitedKingdomLocale];
 
   NSString *s;
   NSDate *date;
 
   date = [self january1st2013WithHour:01 minute:23];
-  s = [[CZDateFormatterCache mainQueueCache] localizedSimpleTimeStringForDate:date];
+  s = [[CZDateFormatterCache mainThreadCache] localizedSimpleTimeStringForDate:date];
   STAssertEqualObjects(s, @"01:23", nil);
 
   date = [self january1st2013WithHour:01 minute:00];
-  s = [[CZDateFormatterCache mainQueueCache] localizedSimpleTimeStringForDate:date];
+  s = [[CZDateFormatterCache mainThreadCache] localizedSimpleTimeStringForDate:date];
   STAssertEqualObjects(s, @"01:00", nil);
 
   date = [self january1st2013WithHour:12 minute:23];
-  s = [[CZDateFormatterCache mainQueueCache] localizedSimpleTimeStringForDate:date];
+  s = [[CZDateFormatterCache mainThreadCache] localizedSimpleTimeStringForDate:date];
   STAssertEqualObjects(s, @"12:23", nil);
 
   date = [self january1st2013WithHour:12 minute:00];
-  s = [[CZDateFormatterCache mainQueueCache] localizedSimpleTimeStringForDate:date];
+  s = [[CZDateFormatterCache mainThreadCache] localizedSimpleTimeStringForDate:date];
   STAssertEqualObjects(s, @"12:00", nil);
 
   date = [self january1st2013WithHour:14 minute:23];
-  s = [[CZDateFormatterCache mainQueueCache] localizedSimpleTimeStringForDate:date];
+  s = [[CZDateFormatterCache mainThreadCache] localizedSimpleTimeStringForDate:date];
   STAssertEqualObjects(s, @"14:23", nil);
 }
 

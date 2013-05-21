@@ -19,6 +19,7 @@
 @property(nonatomic,strong) NSLocale *currentLocale;
 
 + (CZDateFormatterCache *)mainQueueCache;
++ (CZDateFormatterCache *)mainThreadCache;
 
 - (NSString *)localizedSimpleTimeStringForDate:(NSDate *)date;
 - (NSString *)localizedStringFromDate:(NSDate *)date dateStyle:(NSDateFormatterStyle)dateStyle timeStyle:(NSDateFormatterStyle)timeStyle;
