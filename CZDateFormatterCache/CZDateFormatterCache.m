@@ -110,6 +110,16 @@
   self.currentLocale = [NSLocale currentLocale];
 }
 
+- (NSString *)localizedCompactTimeStringForDate:(NSDate *)date
+{
+  NSString *result = [self localizedSimpleTimeStringForDate:date];
+
+  result = [result stringByReplacingOccurrencesOfString:@"am" withString:@"a" options:NSCaseInsensitiveSearch range:NSMakeRange(0, result.length)];
+  result = [result stringByReplacingOccurrencesOfString:@"pm" withString:@"p" options:NSCaseInsensitiveSearch range:NSMakeRange(0, result.length)];
+  result = [result stringByReplacingOccurrencesOfString:@" " withString:@""];
+  return result.lowercaseString;
+}
+
 - (NSString *)localizedStringFromDate:(NSDate *)date dateStyle:(NSDateFormatterStyle)dateStyle timeStyle:(NSDateFormatterStyle)timeStyle
 {
   NSAssert(dateStyle <= kCFDateFormatterFullStyle, @"CFDateFormatterStyle has changed");

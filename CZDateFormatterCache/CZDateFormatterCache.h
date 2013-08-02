@@ -21,6 +21,7 @@
 + (CZDateFormatterCache *)mainQueueCache;
 + (CZDateFormatterCache *)mainThreadCache;
 
+- (NSString *)localizedCompactTimeStringForDate:(NSDate *)date;
 - (NSString *)localizedSimpleTimeStringForDate:(NSDate *)date;
 - (NSString *)localizedStringFromDate:(NSDate *)date dateStyle:(NSDateFormatterStyle)dateStyle timeStyle:(NSDateFormatterStyle)timeStyle;
 
