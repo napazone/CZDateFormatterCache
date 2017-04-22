@@ -136,7 +136,7 @@
   }
 
   NSCalendar *calendar = [NSCalendar currentCalendar];
-  NSDateComponents *components = [calendar components:(NSHourCalendarUnit | NSMinuteCalendarUnit) fromDate:date];
+  NSDateComponents *components = [calendar components:(NSCalendarUnitHour | NSCalendarUnitMinute) fromDate:date];
   if (components.minute == 0) {
     if (components.hour == 12) {
       return NSLocalizedString(@"Noon", nil);
